@@ -6,8 +6,18 @@ using UnityEngine.UI;
 public class SpectrumView : MonoBehaviour
 {
     public Gradient color;
+    [Range(0, 360)]
     public int numOfBars;
-    public float radius = 50, amp = 50;
+    [Min (0)]
+    public float radius = 50, amp = 50; 
+
+    [Range(0,360)]
+    public float degrees = 360;
+
+    public bool X, Y, Z;
+
+    public Vector3 dirstep;
+    public Vector3 addstep;
     float angleStep;
     public GameObject bar;
     public GameObject[] bars;
@@ -27,18 +37,22 @@ public class SpectrumView : MonoBehaviour
     {
         bars = new GameObject[numOfBars];
         float angle = 0;
-        
-        for(int i = 0; i < numOfBars; i++)
+        Vector3 movstep = Vector3.zero;
+
+
+        for (int i = 0; i < numOfBars; i++)
         {
             Vector3 rot = spawn.transform.eulerAngles;
-            rot.z = angle;
+            rot.y = angle;
 
             GameObject g = Instantiate(bar, Vector3.zero, Quaternion.identity, spawn.transform);
 
             g.transform.localPosition = Vector3.zero;
             g.transform.Rotate(rot);
-            g.transform.localPosition = g.transform.up*radius;
+            g.transform.localPosition = ((g.transform.forward* dirstep.z + g.transform.up * dirstep.y + g.transform.right* dirstep.x )* radius )
+                + movstep;
             angle += angleStep;
+            movstep += addstep;
 
             bars[i] = g;
         }
@@ -55,18 +69,24 @@ public class SpectrumView : MonoBehaviour
             for (int i = 0; i < numOfBars; i++)
             {
                 Vector3 prevScale = bars[i].transform.localScale;
-                prevScale.y = Spectrum[i] * amp;
+
+                if (X)
+                    prevScale.x = Spectrum[i] * amp;
+                if (Y)
+                    prevScale.y = Spectrum[i] * amp;
+                if (Z)
+                    prevScale.z = Spectrum[i] * amp;
                 sum += Spectrum[i];
 
                 bars[i].transform.localScale = prevScale;
-                bars[i].GetComponent<Image>().color = color.Evaluate(Spectrum[i] * amp/ 5);
+                bars[i].GetComponent<BarComponent>().setColor(color.Evaluate(Spectrum[i] * amp / 5));
             }
 
             if (icon)
             {
-                sum = Mathf.Clamp(sum, 1f, 1.1f);
+                sum = Mathf.Clamp(sum*amp, 1f, amp/4);
 
-                icon.transform.localScale = new Vector3(sum, sum, 1);
+                icon.transform.localScale = new Vector3(sum, sum, sum);
             }
         }
     }
